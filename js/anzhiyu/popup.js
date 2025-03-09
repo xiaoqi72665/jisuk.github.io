@@ -1,0 +1,1 @@
+class PopupManager{constructor(){this.defaultOptions={duration:6e4,permanent:!0}}}
