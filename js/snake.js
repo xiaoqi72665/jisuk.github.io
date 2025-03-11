@@ -1,0 +1,32 @@
+window.SnakeGame=class{constructor(t,e={}){this.container=document.getElementById(t),this.score=0,this.snake={body:[{x:20,y:20},{x:10,y:20}],size:10},this.gameRecords=JSON.parse(localStorage.getItem("snakeGameRecords")||"[]"),this.direction="right",this.isPaused=!0,this.difficulty="easy",this.speeds={easy:200,medium:150,hard:100,hell:50},this.speed=this.speeds.easy,this.options={width:e.width||400,height:e.height||400,backgroundColor:e.backgroundColor||getComputedStyle(document.documentElement).getPropertyValue("--anzhiyu-card-bg"),snakeColor:e.snakeColor||getComputedStyle(document.documentElement).getPropertyValue("--anzhiyu-main"),foodColor:e.foodColor||getComputedStyle(document.documentElement).getPropertyValue("--anzhiyu-main"),borderColor:e.borderColor||getComputedStyle(document.documentElement).getPropertyValue("--anzhiyu-main")},this.init()}init(){if(!this.isInitialized){this.createGameUI(),this.canvas=document.getElementById("snake-canvas"),this.ctx=this.canvas.getContext("2d"),this.generateFood(),this.updateRecordsList(),this.boundHandleKeyPress=this.handleKeyPress.bind(this),document.addEventListener("keydown",this.boundHandleKeyPress),this.isInitialized=!0;let t=this.container.querySelector("#start-pause-btn"),s=(t.addEventListener("click",()=>{this.isPaused?(this.startGame(),t.textContent="暂停游戏"):(this.pauseGame(),t.textContent="继续游戏")}),this.container.querySelectorAll(".difficulty-btn"));s.forEach(e=>{e.addEventListener("click",()=>{var t=e.dataset.difficulty;this.setDifficulty(t),s.forEach(t=>t.classList.remove("active")),e.classList.add("active")})}),this.updateScore()}}createGameUI(){this.container.innerHTML=`
+        <div class="snake-game-score">分数：0</div>
+        <div class="snake-game-status">点击开始按钮开始游戏</div>
+        <div class="snake-game-container">
+          <div class="snake-game-difficulty">
+            <button class="difficulty-btn active" data-difficulty="easy">简单</button>
+            <button class="difficulty-btn" data-difficulty="medium">中等</button>
+            <button class="difficulty-btn" data-difficulty="hard">困难</button>
+            <button class="difficulty-btn" data-difficulty="hell">地狱</button>
+          </div>
+          <canvas id="snake-canvas" class="snake-game-canvas" width="${this.options.width}" height="${this.options.height}"></canvas>
+        </div>
+        <div class="snake-game-controls">
+          <button class="snake-game-button" id="start-pause-btn">开始游戏</button>
+        </div>
+        <div class="snake-game-records">
+          <h3>游戏记录</h3>
+          <div class="records-list"></div>
+        </div>
+      `}updateRecordsList(){this.container.querySelector(".records-list").innerHTML=this.gameRecords.map(t=>`
+        <div class="record-item">
+          <span class="record-difficulty">${this.getDifficultyText(t.difficulty)}</span>
+          <span class="record-score">${t.score}分</span>
+          <span class="record-date">${t.date}</span>
+        </div>
+      `).join("")}getDifficultyText(t){return{easy:"简单",medium:"中等",hard:"困难",hell:"地狱"}[t]||t}setDifficulty(t){this.difficulty=t,this.speed=this.speeds[t]}generateFood(){this.food={x:10*Math.floor(Math.random()*(this.options.width/10)),y:10*Math.floor(Math.random()*(this.options.height/10)),size:10}}handleKeyPress(t){t=t.key.toLowerCase();"arrowup"!==t&&"w"!==t||"down"===this.direction||(this.direction="up"),"arrowdown"!==t&&"s"!==t||"up"===this.direction||(this.direction="down"),"arrowleft"!==t&&"a"!==t||"right"===this.direction||(this.direction="left"),"arrowright"!==t&&"d"!==t||"left"===this.direction||(this.direction="right")}moveSnake(){var e={...this.snake.body[0]};switch(this.direction){case"up":e.y-=this.snake.size;break;case"down":e.y+=this.snake.size;break;case"left":e.x-=this.snake.size;break;case"right":e.x+=this.snake.size}if(e.x<0||e.x>=this.options.width||e.y<0||e.y>=this.options.height)this.gameOver();else{if(this.snake.body.unshift(e),e.x===this.food.x&&e.y===this.food.y){switch(this.difficulty){case"easy":this.score+=10;break;case"medium":this.score+=15;break;case"hard":this.score+=25;break;case"hell":this.score+=40}this.updateScore(),this.generateFood()}else this.snake.body.pop();for(let t=1;t<this.snake.body.length;t++)if(e.x===this.snake.body[t].x&&e.y===this.snake.body[t].y)return void this.gameOver()}}updateScore(){this.container.querySelector(".snake-game-score").textContent="分数："+this.score}draw(){this.ctx.fillStyle=this.options.backgroundColor,this.ctx.fillRect(0,0,this.options.width,this.options.height),this.ctx.strokeStyle=this.options.borderColor,this.ctx.lineWidth=2,this.ctx.strokeRect(0,0,this.options.width,this.options.height),this.ctx.fillStyle=this.options.foodColor,this.ctx.fillRect(this.food.x,this.food.y,this.food.size,this.food.size),this.snake.body.forEach((t,e)=>{this.ctx.fillStyle=0===e?this.options.snakeColor:this.options.snakeColor+"80",this.ctx.fillRect(t.x,t.y,this.snake.size,this.snake.size)})}gameLoop(){this.isPaused||(this.moveSnake(),this.draw(),setTimeout(()=>this.gameLoop(),this.speed))}startGame(){this.isPaused&&(this.isPaused=!1,this.gameLoop(),this.container.querySelector(".snake-game-status").textContent="游戏进行中")}destroy(){this.boundHandleKeyPress&&document.removeEventListener("keydown",this.boundHandleKeyPress),this.isPaused=!0,this.isInitialized=!1,this.container&&(this.container.innerHTML="")}pauseGame(){this.isPaused=!0,this.container.querySelector(".snake-game-status").textContent="游戏已暂停"}gameOver(){this.isPaused=!0,alert("游戏结束！最终得分："+this.score);var t={difficulty:this.difficulty,score:this.score,date:(new Date).toLocaleString()},t=(this.gameRecords.unshift(t),10<this.gameRecords.length&&this.gameRecords.pop(),localStorage.setItem("snakeGameRecords",JSON.stringify(this.gameRecords)),this.updateRecordsList(),this.snake.body=[{x:20,y:20},{x:10,y:20}],this.score=0,this.updateScore(),this.direction="right",this.container.querySelector(".snake-game-status")),e=this.container.querySelector("#start-pause-btn");t.textContent="点击开始按钮开始新游戏",e.textContent="开始游戏"}updateRecordsList(){this.container.querySelector(".records-list").innerHTML=this.gameRecords.map(t=>`
+        <div class="record-item">
+          <span class="record-difficulty">${this.getDifficultyText(t.difficulty)}</span>
+          <span class="record-score">${t.score}分</span>
+          <span class="record-date">${t.date}</span>
+        </div>
+      `).join("")}},window.SnakeGame=SnakeGame;
