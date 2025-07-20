@@ -1,0 +1,1 @@
+document.addEventListener("pjax:complete",function(){"/privacy/"===window.location.pathname&&document.getElementById("body-wrap").scrollIntoView({behavior:"smooth"})});
